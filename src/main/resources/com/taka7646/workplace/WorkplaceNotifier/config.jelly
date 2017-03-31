@@ -1,0 +1,17 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+  <f:entry name="format" title="format" field="format">
+    <select name="format">
+      <f:option value="text" selected="${instance.format=='text'}">text</f:option>
+      <f:option value="markdown" selected="${instance.format=='markdown'}">markdown</f:option>
+    </select>
+  </f:entry>
+
+  <f:entry name="successMessage" title="successMessage" field="successMessage">
+    <f:textarea/>
+  </f:entry>
+
+  <f:entry name="failureMessage" title="failureMessage" field="failureMessage">
+    <f:textarea/>
+  </f:entry>
+</j:jelly>
