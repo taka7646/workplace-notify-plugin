@@ -2,9 +2,23 @@
 
   <f:entry name="format" title="format" field="format">
     <select name="format">
-      <f:option value="text" selected="${instance.format=='text'}">text</f:option>
-      <f:option value="markdown" selected="${instance.format=='markdown'}">markdown</f:option>
+      <j:forEach var="i" items="${descriptor.FORMATS}">
+        <f:option value="${i.getValue()}" selected="${instance.format==i.getValue()}">${i.getValue()}</f:option>
+      </j:forEach>
     </select>
+  </f:entry>
+
+
+  <f:entry name="notificationStrategy" title="notificationStrategy" field="notificationStrategy">
+    <select name="notificationStrategy">
+      <j:forEach var="i" items="${descriptor.STRATEGIES}">
+        <f:option value="${i.getValue()}" selected="${instance.format==i.getValue()}">${i.getValue()}</f:option>
+      </j:forEach>
+    </select>
+  </f:entry>
+
+  <f:entry name="groupId" title="groupId" field="groupId">
+    <f:textbox/>
   </f:entry>
 
   <f:entry name="successMessage" title="successMessage" field="successMessage">

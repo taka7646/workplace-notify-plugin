@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import org.apache.http.HttpHost;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -21,11 +22,13 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicNameValuePair;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -34,16 +37,17 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Result;
 
 public class WorkplaceNotifier extends Notifier {
 
 	private static final Logger logger = Logger.getLogger(WorkplaceNotifier.class.getName());
 
-	private final String url = "";
-
 	private final String notificationStrategy;
 
 	private final String format;
+
+	private final String groupId;
 
 	private final String successMessage;
 
@@ -56,6 +60,10 @@ public class WorkplaceNotifier extends Notifier {
 	public String getFormat() {
 		return format;
 	}
+	
+	public String getGroupId(){
+		return groupId;
+	}
 
 	public String getSuccessMessage() {
 		return successMessage;
@@ -66,9 +74,10 @@ public class WorkplaceNotifier extends Notifier {
 	}
 
 	@DataBoundConstructor
-	public WorkplaceNotifier(String notificationStrategy, String format, String successMessage, String failureMessage) {
+	public WorkplaceNotifier(String notificationStrategy, String format, String groupId, String successMessage, String failureMessage) {
 		this.notificationStrategy = notificationStrategy;
 		this.format = format;
+		this.groupId = groupId;
 		this.successMessage = successMessage;
 		this.failureMessage = failureMessage;
 	}
@@ -86,20 +95,32 @@ public class WorkplaceNotifier extends Notifier {
 		if (!strategy.needNotification(build)) {
 			return true;
 		}
+		Result result = build.getResult();
+		DescriptorImpl desc = (DescriptorImpl)getDescriptor();
 		EnvVars env = null;
 		try {
 			env = build.getEnvironment(listener);
 		} catch (Exception e) {
 			env = new EnvVars();
 		}
-		String url = env.expand(this.url);
+		String url = env.expand(desc.getUrlOrDefault()) + String.format("/%s/%s", groupId, "feed");
 		HttpPost post = new HttpPost(url);
+		
+		String message = env.expand(result == Result.SUCCESS? successMessage: failureMessage);
 		List<NameValuePair> params = new ArrayList<>();
-		params.add(new BasicNameValuePair("username", "vip"));
+		params.add(new BasicNameValuePair("access_token", env.expand(desc.getToken())));
+		params.add(new BasicNameValuePair("message", message));
+		MessageFormat messagwFormat = MessageFormat.fromString(format);
+		messagwFormat.setFormatParam(params);
+		post.setHeader("Authorization", "Bearer " + desc.getToken());
 		post.setEntity(new UrlEncodedFormEntity(params));
 		try (CloseableHttpClient client = this.getHttpClient();
 				CloseableHttpResponse response = client.execute(post);) {
-			logger.info("perform workpalce notify" + response.toString());
+			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
+				listener.getLogger().println("workpalceへ通知を送信しました\n" + message);
+			}else{
+				listener.getLogger().println("workpalceへ通知に失敗しました\n" + response.toString());
+			}
 		}
 		return true;
 	}
@@ -137,6 +158,27 @@ public class WorkplaceNotifier extends Notifier {
 
 	@Extension
 	public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+		
+		private String token;
+		private String url;
+		
+		public static final NotificationStrategy[] STRATEGIES = NotificationStrategy.values();
+		public static final MessageFormat[] FORMATS = MessageFormat.values();
+		
+		public String getToken(){
+			return token;
+		}
+		
+		public String getUrl(){
+			return url;
+		}
+
+		public String getUrlOrDefault(){
+			if(url == null || url.equals("")){
+				return "https://graph.facebook.com/v2.8";
+			}
+			return url;
+		}
 
 		public DescriptorImpl() {
 			load();
@@ -150,6 +192,14 @@ public class WorkplaceNotifier extends Notifier {
 		@Override
 		public String getDisplayName() {
 			return "Workpalce Notifier";
+		}
+		
+		@Override
+		public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+			token = formData.getString("token");
+			url = formData.getString("url");
+			save();
+			return super.configure(req, formData);
 		}
 	}
 }
