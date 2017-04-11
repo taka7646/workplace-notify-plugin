@@ -12,7 +12,7 @@
   <f:entry name="notificationStrategy" title="notificationStrategy" field="notificationStrategy">
     <select name="notificationStrategy">
       <j:forEach var="i" items="${descriptor.STRATEGIES}">
-        <f:option value="${i.getValue()}" selected="${instance.format==i.getValue()}">${i.getValue()}</f:option>
+        <f:option value="${i.getValue()}" selected="${instance.notificationStrategy==i.getValue()}">${i.getValue()}</f:option>
       </j:forEach>
     </select>
   </f:entry>

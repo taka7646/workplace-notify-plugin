@@ -33,7 +33,8 @@ public enum NotificationStrategy {
 	
 	public boolean needNotification(AbstractBuild<?, ?> build){
 		Result result = build.getResult();
-		if(result.completeBuild){
+		
+		if(result == Result.SUCCESS){
 			//　成功のとき
 			return this == ALL || this == SUCCESS;
 		}else{
