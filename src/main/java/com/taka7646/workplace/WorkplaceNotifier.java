@@ -90,7 +90,7 @@ public class WorkplaceNotifier extends Notifier {
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
 			throws InterruptedException, IOException {
-		logger.info("perform workpalce notify" + build.getResult().toString());
+		logger.info("perform workplace notify" + build.getResult().toString());
 		NotificationStrategy strategy = NotificationStrategy.fromString(notificationStrategy);
 		if (!strategy.needNotification(build)) {
 			return true;
@@ -117,9 +117,9 @@ public class WorkplaceNotifier extends Notifier {
 		try (CloseableHttpClient client = this.getHttpClient();
 				CloseableHttpResponse response = client.execute(post);) {
 			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-				listener.getLogger().println("workpalceへ通知を送信しました\n" + message);
+				listener.getLogger().println("workplaceへ通知を送信しました\n" + message);
 			}else{
-				listener.getLogger().println("workpalceへ通知に失敗しました\n" + response.toString());
+				listener.getLogger().println("workplaceへ通知に失敗しました\n" + response.toString());
 			}
 		}
 		return true;
@@ -127,7 +127,7 @@ public class WorkplaceNotifier extends Notifier {
 
 	@Override
 	public boolean prebuild(AbstractBuild<?, ?> build, BuildListener listener) {
-		logger.info("start workpalce notify" + build.toString());
+		logger.info("start workplace notify" + build.toString());
 		return true;
 	}
 
@@ -191,7 +191,7 @@ public class WorkplaceNotifier extends Notifier {
 
 		@Override
 		public String getDisplayName() {
-			return "Workpalce Notifier";
+			return "Workplace Notifier";
 		}
 		
 		@Override

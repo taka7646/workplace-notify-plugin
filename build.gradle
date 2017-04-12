@@ -6,14 +6,14 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 
 group = "org.jenkins-ci.plugins"
-version = "0.0.3"    // Or whatever your version is.
+version = "0.0.4"    // Or whatever your version is.
 description = "facebook workplace notify"
 
 jenkinsPlugin {
     coreVersion = "1.609.2"                                                         // Version of Jenkins core this plugin depends on.
     displayName = "Workplace Notify plugin"                                       // Human-readable name of plugin.
     url = "https://wiki.jenkins-ci.org/display/JENKINS/Workplace+Notify+Plugin"   // URL for plugin on Jenkins wiki or elsewhere.
-    gitHubUrl = "https://github.com/jenkinsci/workplace-notify-plugin"            // Plugin URL on GitHub. Optional.
+    gitHubUrl = "https://github.com/taka7646/workplace-notify-plugin"             // Plugin URL on GitHub. Optional.
     shortName = "workplace-notify"                                                // Plugin ID, defaults to the project name without trailing '-plugin'
 
     // The developers section is optional, and corresponds to the POM developers section.
