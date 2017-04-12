@@ -110,10 +110,10 @@ public class WorkplaceNotifier extends Notifier {
 		List<NameValuePair> params = new ArrayList<>();
 		params.add(new BasicNameValuePair("access_token", env.expand(desc.getToken())));
 		params.add(new BasicNameValuePair("message", message));
-		MessageFormat messagwFormat = MessageFormat.fromString(format);
-		messagwFormat.setFormatParam(params);
-		post.setHeader("Authorization", "Bearer " + desc.getToken());
-		post.setEntity(new UrlEncodedFormEntity(params));
+		MessageFormat messageFormat = MessageFormat.fromString(format);
+		messageFormat.setFormatParam(params);
+		post.setHeader("Accept-Charset", "utf-8");
+		post.setEntity(new UrlEncodedFormEntity(params, "utf-8"));
 		try (CloseableHttpClient client = this.getHttpClient();
 				CloseableHttpResponse response = client.execute(post);) {
 			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){

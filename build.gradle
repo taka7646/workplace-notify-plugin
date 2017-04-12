@@ -6,7 +6,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 
 group = "org.jenkins-ci.plugins"
-version = "0.0.2"    // Or whatever your version is.
+version = "0.0.3"    // Or whatever your version is.
 description = "facebook workplace notify"
 
 jenkinsPlugin {
