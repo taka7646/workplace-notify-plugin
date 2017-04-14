@@ -17,7 +17,19 @@
     </select>
   </f:entry>
 
+  <f:entry name="sendTarget" title="sendTarget" field="sendTarget">
+    <select name="sendTarget">
+      <j:forEach var="i" items="${descriptor.SEND_TARGETS}">
+        <f:option value="${i.getValue()}" selected="${instance.sendTarget==i.getValue()}">${i.getValue()}</f:option>
+      </j:forEach>
+    </select>
+  </f:entry>
+
   <f:entry name="groupId" title="groupId" field="groupId">
+    <f:textbox/>
+  </f:entry>
+
+  <f:entry name="feedId" title="feedId" field="feedId">
     <f:textbox/>
   </f:entry>
 
@@ -28,4 +40,8 @@
   <f:entry name="failureMessage" title="failureMessage" field="failureMessage">
     <f:textarea/>
   </f:entry>
+  <f:block>
+  送信したメッセージのIDは環境変数「WORKPLACE_NOTIFY_ID_[プロジェクト名大文字]」に設定されます。<br />
+  下流プロジェクトで「sendTarget = comment」の「feedId」に上記環境変数を設定することでコメント追加していくことができます。
+  </f:block>
 </j:jelly>

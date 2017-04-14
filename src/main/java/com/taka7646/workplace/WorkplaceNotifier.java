@@ -21,6 +21,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -47,11 +48,17 @@ public class WorkplaceNotifier extends Notifier {
 
 	private final String format;
 
+	private final String sendTarget;
+
 	private final String groupId;
+	
+	private final String feedId;
 
 	private final String successMessage;
 
 	private final String failureMessage;
+	
+	protected String responseBody;
 
 	public String getNotificationStrategy() {
 		return notificationStrategy;
@@ -61,8 +68,16 @@ public class WorkplaceNotifier extends Notifier {
 		return format;
 	}
 	
+	public String getSendTarget() {
+		return sendTarget;
+	}
+	
 	public String getGroupId(){
 		return groupId;
+	}
+
+	public String getFeedId(){
+		return feedId;
 	}
 
 	public String getSuccessMessage() {
@@ -74,10 +89,12 @@ public class WorkplaceNotifier extends Notifier {
 	}
 
 	@DataBoundConstructor
-	public WorkplaceNotifier(String notificationStrategy, String format, String groupId, String successMessage, String failureMessage) {
+	public WorkplaceNotifier(String notificationStrategy, String format, String sendTarget, String groupId, String feedId, String successMessage, String failureMessage) {
 		this.notificationStrategy = notificationStrategy;
 		this.format = format;
+		this.sendTarget = sendTarget;
 		this.groupId = groupId;
+		this.feedId = feedId;
 		this.successMessage = successMessage;
 		this.failureMessage = failureMessage;
 	}
@@ -103,7 +120,19 @@ public class WorkplaceNotifier extends Notifier {
 		} catch (Exception e) {
 			env = new EnvVars();
 		}
-		String url = env.expand(desc.getUrlOrDefault()) + String.format("/%s/%s", groupId, "feed");
+		SendTarget target = SendTarget.fromString(sendTarget);
+		String groupId = env.expand(this.groupId);
+		String feedId = env.expand(this.feedId);
+		if(target == SendTarget.COMMENT){
+			// コメントの投稿先を設定する
+			if(feedId.indexOf('_') != -1){
+				// グループIDも含めた値が設定されている。
+				groupId = feedId;
+			}else{
+				groupId = groupId + "_" + feedId;
+			}
+		}
+		String url = env.expand(desc.getUrlOrDefault()) + String.format("/%s/%s", groupId, target.getValue());
 		HttpPost post = new HttpPost(url);
 		
 		String message = env.expand(result == Result.SUCCESS? successMessage: failureMessage);
@@ -114,10 +143,17 @@ public class WorkplaceNotifier extends Notifier {
 		messageFormat.setFormatParam(params);
 		post.setHeader("Accept-Charset", "utf-8");
 		post.setEntity(new UrlEncodedFormEntity(params, "utf-8"));
+
+		String projectUperName = build.getProject().getName().toUpperCase();
 		try (CloseableHttpClient client = this.getHttpClient();
 				CloseableHttpResponse response = client.execute(post);) {
 			if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-				listener.getLogger().println("workplaceへ通知を送信しました\n" + message);
+				// {"id":"1234206985728205_1234125435369693"}
+				responseBody = EntityUtils.toString(response.getEntity());
+				JSONObject o = JSONObject.fromObject(responseBody);
+				String id = o.getString("id");
+				EnvVars.masterEnvVars.put("WORKPLACE_NOTIFY_ID_" + projectUperName, id);
+				listener.getLogger().println("workplaceへ通知を送信しました\n" + message + "\n" + url + "\n" + responseBody);
 			}else{
 				listener.getLogger().println("workplaceへ通知に失敗しました\n" + response.toString());
 			}
@@ -164,6 +200,7 @@ public class WorkplaceNotifier extends Notifier {
 		
 		public static final NotificationStrategy[] STRATEGIES = NotificationStrategy.values();
 		public static final MessageFormat[] FORMATS = MessageFormat.values();
+		public static final SendTarget[] SEND_TARGETS = SendTarget.values();
 		
 		public String getToken(){
 			return token;
