@@ -8,6 +8,7 @@ public enum NotificationStrategy {
 	ALL("all"),
 	FAILURE("failure"),
 	SUCCESS("success"),
+	FAILURE_AND_FIXED("failure and fixed"),
 	;
 
 	private String value;
@@ -33,8 +34,15 @@ public enum NotificationStrategy {
 	
 	public boolean needNotification(AbstractBuild<?, ?> build){
 		Result result = build.getResult();
-		
-		if(result == Result.SUCCESS){
+		if(this == FAILURE_AND_FIXED){
+			Result previousResult = build.getPreviousBuild().getResult();
+			if(result == Result.SUCCESS){
+				return previousResult != Result.SUCCESS;
+			}else{
+				return true;
+			}
+		}
+		else if(result == Result.SUCCESS){
 			//　成功のとき
 			return this == ALL || this == SUCCESS;
 		}else{
